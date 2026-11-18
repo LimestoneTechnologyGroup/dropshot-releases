@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dropshot</title>
+<meta name="description" content="Windows screenshots that go where you want: Teams, Claude, a folder. One key, your presets.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15.5' fill='%23d62027'/%3E%3Ccircle cx='16' cy='16' r='12' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='%23d62027'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='2.2' fill='%23d62027'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fafaf9; --surface: #ffffff; --text: #1c1917; --muted: #57534e; --line: #e7e5e4;
+    --accent: #d62027; --accent-text: #ffffff; --code: #f5f5f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0a09; --surface: #1c1917; --text: #fafaf9; --muted: #a8a29e; --line: #292524;
+      --accent: #ef4444; --accent-text: #ffffff; --code: #292524;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0a09; --surface: #1c1917; --text: #fafaf9; --muted: #a8a29e; --line: #292524;
+    --accent: #ef4444; --accent-text: #ffffff; --code: #292524;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 56px 16px 72px; }
+  header { display: flex; align-items: center; gap: 16px; }
+  header svg { width: 56px; height: 56px; flex: none; }
+  h1 { font-size: 40px; line-height: 1.1; margin: 0; letter-spacing: -0.02em; }
+  .tagline { font-size: 20px; color: var(--muted); margin: 16px 0 32px; max-width: 34em; }
+  .download {
+    display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px;
+    background: var(--accent); color: var(--accent-text); border-radius: 10px;
+    font-size: 18px; font-weight: 600; text-decoration: none;
+  }
+  .download:hover { filter: brightness(1.08); }
+  .download:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 12px; }
+  h2 { font-size: 22px; margin: 48px 0 12px; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card strong { display: block; margin-bottom: 4px; }
+  .card span { color: var(--muted); font-size: 15px; }
+  kbd {
+    font: 13px/1 ui-monospace, Consolas, monospace; background: var(--code);
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 3px 6px;
+  }
+  .note { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px 16px; color: var(--muted); font-size: 15px; }
+  footer { margin-top: 56px; color: var(--muted); font-size: 14px; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="15.5" fill="#d62027"/><circle cx="16" cy="16" r="12" fill="#fff"/>
+      <circle cx="16" cy="16" r="8.5" fill="#d62027"/><circle cx="16" cy="16" r="5" fill="#fff"/>
+      <circle cx="16" cy="16" r="2.2" fill="#d62027"/>
+    </svg>
+    <h1>Dropshot</h1>
+  </header>
+  <p class="tagline">Screenshots that go straight where you want them: a Teams channel, Claude, an email or a folder. One key, your presets.</p>
+
+  <a class="download" href="https://github.com/LimestoneTechnologyGroup/dropshot-releases/releases/latest/download/Dropshot.exe">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+    Download for Windows
+  </a>
+  <p class="meta" id="meta">Windows 10 and 11 · no admin rights needed · updates itself</p>
+
+  <h2>Install</h2>
+  <ol>
+    <li>Run <strong>Dropshot.exe</strong> from your Downloads.</li>
+    <li>If Windows says it protected your PC, click <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+    <li>Choose <strong>Yes</strong> to install. It's added to your Start menu, starts when you sign in, and keeps itself up to date.</li>
+  </ol>
+
+  <h2>Use</h2>
+  <div class="grid">
+    <div class="card"><strong><kbd>PrtSc</kbd></strong><span>Drag a box. Click for one monitor, Enter for all of them.</span></div>
+    <div class="card"><strong><kbd>Alt</kbd> + <kbd>PrtSc</kbd></strong><span>The window you're in.</span></div>
+    <div class="card"><strong><kbd>Ctrl</kbd> + <kbd>PrtSc</kbd></strong><span>All monitors.</span></div>
+    <div class="card"><strong><kbd>Shift</kbd> + <kbd>PrtSc</kbd></strong><span>Same box as last time.</span></div>
+  </div>
+  <p>After each capture, pick a preset with <kbd>1</kbd>–<kbd>9</kbd>. Build your own from the tray icon's <strong>Presets…</strong> window, and give your favourites their own hotkey so they run in one press:</p>
+  <ul>
+    <li><strong>Send to Claude</strong>: pastes the screenshot into Claude.</li>
+    <li><strong>Post to a Teams channel</strong>: opens the channel and pastes it in.</li>
+    <li><strong>Email to a Teams channel</strong>: sends it through Outlook to the channel's email address.</li>
+    <li><strong>Save, shrink, border, stamp</strong>: in any order you like.</li>
+  </ul>
+
+  <p class="note">Nothing leaves your PC unless a preset sends it. Dropshot only goes online to check for its own updates.</p>
+
+  <footer>Limestone Technology Group</footer>
+</main>
+<script>
+  // Show the latest version number and date; the button works without this.
+  fetch("https://api.github.com/repos/LimestoneTechnologyGroup/dropshot-releases/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel || !rel.tag_name) return;
+      var date = new Date(rel.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+      document.getElementById("meta").textContent =
+        "Version " + rel.tag_name.replace(/^v/, "") + " · " + date + " · Windows 10 and 11 · no admin rights needed · updates itself";
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>
