@@ -1,0 +1,89 @@
+name: Mirror a release
+
+# Copies a production Dropshot release from Limestone's downloads site into a GitHub release here,
+# with the version.json that Dropshot 1.10.x and earlier read. Those copies check
+# https://github.com/LimestoneTechnologyGroup/dropshot-releases/releases/latest/download/version.json
+# and verify only its SHA-256, so they can only reach the signed releases (1.11.0 and later, which
+# update from downloads.limestonetg.com) through this mirror. DESIGN.md: keep the mirror for one
+# version, then stop (phase 3).
+#
+# Run by hand after a version is promoted to production in the dropshot repository. Nothing is
+# built here: the file is downloaded from production, and published only if its size, SHA-512 and
+# SHA-256 match production's manifest, its Authenticode signature is valid, timestamped and by
+# "Limestone Technology Group, LLC", its version resource says Dropshot at that version, and the
+# version is higher than this repository's latest release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The production version to mirror (for example 1.11.0)"
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell
+    env:
+      VERSION: ${{ inputs.version }}
+      FEED: https://downloads.limestonetg.com/add-ons/production/dropshot
+      PUBLISHER: Limestone Technology Group, LLC
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download and verify ${{ inputs.version }} from production
+        run: |
+          if ($env:VERSION -notmatch '^\d{1,5}\.\d{1,5}\.\d{1,5}$') { Write-Host "::error::version must look like 1.11.0"; exit 1 }
+          New-Item -ItemType Directory -Force out | Out-Null
+          $manifest = Invoke-RestMethod -UseBasicParsing -MaximumRedirection 0 -Uri "$env:FEED/latest-$env:VERSION.json"
+          if ($manifest.key -cne 'dropshot' -or $manifest.version -ne $env:VERSION -or $manifest.file -cne "Dropshot-$env:VERSION.exe") { Write-Host "::error::latest-$env:VERSION.json is not Dropshot $env:VERSION."; exit 1 }
+          Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -Uri "$env:FEED/$($manifest.file)" -OutFile out\Dropshot.exe
+          $bytes = [IO.File]::ReadAllBytes((Resolve-Path out\Dropshot.exe))
+          $sha512 = [Convert]::ToBase64String([Security.Cryptography.SHA512]::Create().ComputeHash($bytes))
+          $sha256 = -join ([Security.Cryptography.SHA256]::Create().ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') })
+          $problems = @()
+          if ($bytes.Length -ne [long]$manifest.size) { $problems += 'size differs from the manifest' }
+          if ($sha512 -cne $manifest.sha512) { $problems += 'SHA-512 differs from the manifest' }
+          if ($sha256 -ne $manifest.sha256) { $problems += 'SHA-256 differs from the manifest' }
+          $sig = Get-AuthenticodeSignature -LiteralPath (Resolve-Path out\Dropshot.exe)
+          $cn = if ($sig.SignerCertificate) { $sig.SignerCertificate.GetNameInfo([Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) } else { $null }
+          if ($sig.Status -ne 'Valid') { $problems += "signature is $($sig.Status)" }
+          elseif ($cn -cne $env:PUBLISHER) { $problems += "signed by '$cn'" }
+          if (-not $sig.TimeStamperCertificate) { $problems += 'no timestamp' }
+          $info = [Diagnostics.FileVersionInfo]::GetVersionInfo((Resolve-Path out\Dropshot.exe))
+          if ($info.ProductName -cne 'Dropshot' -or ('{0}.{1}.{2}' -f $info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart) -ne $env:VERSION) { $problems += "version resource says $($info.ProductName) $($info.FileVersion)" }
+          if ($problems.Count -gt 0) { Write-Host "::error::Not mirrored: $($problems -join '; ')"; exit 1 }
+          # The format Dropshot 1.10.x reads (its Updater.Release: version, url, sha256, notes).
+          $legacy = [ordered]@{
+            version = $env:VERSION
+            url     = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/v$env:VERSION/Dropshot.exe"
+            sha256  = $sha256
+            notes   = "$($manifest.notes)"
+          }
+          [IO.File]::WriteAllText((Join-Path (Resolve-Path out) 'version.json'), ($legacy | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
+          [IO.File]::WriteAllText((Join-Path (Resolve-Path out) 'notes.md'), "$(if ($manifest.notes) { $manifest.notes } else { "Dropshot $env:VERSION" })`n`nSigned by $env:PUBLISHER. SHA-256 ``$sha256``.", (New-Object Text.UTF8Encoding($false)))
+          Write-Host "Verified Dropshot ${env:VERSION}, signed by $cn, timestamped, SHA-256 $sha256"
+
+      - name: Refuse a version at or below the latest release
+        run: |
+          $latest = cmd /c "gh release view --repo %GITHUB_REPOSITORY% --json tagName --jq .tagName 2>nul"
+          if ($LASTEXITCODE -eq 0 -and $latest) {
+            $current = $latest.TrimStart('v')
+            if ([version]$env:VERSION -le [version]$current) { Write-Host "::error::The latest release here is $latest; mirror only a higher version."; exit 1 }
+          }
+          $global:LASTEXITCODE = 0
+
+      - name: Create the GitHub release
+        run: |
+          gh release create "v$env:VERSION" out\Dropshot.exe out\version.json --repo $env:GITHUB_REPOSITORY --title "Dropshot $env:VERSION" --notes-file out\notes.md --latest
+          if ($LASTEXITCODE -ne 0) { exit 1 }
